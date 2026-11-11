@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "name": "demo_dance_lesson",
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "bgColor": "#101418",
+    "duration": 4
+  },
+  "media": {
+    "m_master": {
+      "file": "/workspace/dance-studio/tests/fixtures/grid_master.mp4",
+      "codec": "h264",
+      "width": 1280,
+      "height": 720,
+      "rotation": 0,
+      "sar": "1:1",
+      "parNum": 1,
+      "parDen": 1,
+      "displayWidth": 1280,
+      "displayHeight": 720,
+      "duration": 2,
+      "hasAlpha": false,
+      "fps": 30,
+      "isImage": false,
+      "pixFmt": "yuv420p"
+    },
+    "m_phone": {
+      "file": "/workspace/dance-studio/tests/fixtures/portrait_rot.mp4",
+      "codec": "h264",
+      "width": 1920,
+      "height": 1080,
+      "rotation": 90,
+      "sar": "1:1",
+      "parNum": 1,
+      "parDen": 1,
+      "displayWidth": 1080,
+      "displayHeight": 1920,
+      "duration": 1.5,
+      "hasAlpha": false,
+      "fps": 30,
+      "isImage": false,
+      "pixFmt": "yuv420p"
+    },
+    "m_ntsc": {
+      "file": "/workspace/dance-studio/tests/fixtures/ntsc_par.mp4",
+      "codec": "h264",
+      "width": 720,
+      "height": 480,
+      "rotation": 0,
+      "sar": "10:11",
+      "parNum": 10,
+      "parDen": 11,
+      "displayWidth": 655,
+      "displayHeight": 480,
+      "duration": 1.5,
+      "hasAlpha": false,
+      "fps": 30,
+      "isImage": false,
+      "pixFmt": "yuv420p"
+    },
+    "m_foot": {
+      "file": "/workspace/dance-studio/tests/fixtures/foot_alpha.mov",
+      "codec": "qtrle",
+      "width": 640,
+      "height": 480,
+      "rotation": 0,
+      "sar": "1:1",
+      "parNum": 1,
+      "parDen": 1,
+      "displayWidth": 640,
+      "displayHeight": 480,
+      "duration": 1.5,
+      "hasAlpha": true,
+      "fps": 30,
+      "isImage": false,
+      "pixFmt": "argb"
+    }
+  },
+  "layers": [
+    {
+      "id": "L_master",
+      "name": "全身演示（镜像+裁切）",
+      "mediaId": "m_master",
+      "steps": [
+        {
+          "id": "mir",
+          "op": "mirror",
+          "inSpace": "display"
+        },
+        {
+          "id": "crop",
+          "op": "crop",
+          "inSpace": "mir",
+          "rect": {
+            "x": 160,
+            "y": 0,
+            "w": 960,
+            "h": 720
+          }
+        }
+      ],
+      "placement": {
+        "x": 0,
+        "y": 0
+      },
+      "opacity": 1,
+      "interval": {
+        "start": 0,
+        "end": 4
+      },
+      "endPolicy": "hide"
+    },
+    {
+      "id": "L_foot",
+      "name": "局部脚步（透明+静帧）",
+      "mediaId": "m_foot",
+      "steps": [],
+      "placement": {
+        "x": 30,
+        "y": 430
+      },
+      "opacity": 0.85,
+      "interval": {
+        "start": 0.5,
+        "end": 3.8
+      },
+      "endPolicy": "freeze"
+    },
+    {
+      "id": "L_phone",
+      "name": "竖拍手机（旋转元数据）",
+      "mediaId": "m_phone",
+      "steps": [
+        {
+          "id": "z",
+          "op": "zoom",
+          "inSpace": "display",
+          "factor": 0.3
+        }
+      ],
+      "placement": {
+        "x": 940,
+        "y": 30
+      },
+      "opacity": 1,
+      "interval": {
+        "start": 1,
+        "end": 4
+      },
+      "endPolicy": "hide"
+    },
+    {
+      "id": "L_ntsc",
+      "name": "非方像素参考（PAR 修正）",
+      "mediaId": "m_ntsc",
+      "steps": [],
+      "placement": {
+        "x": 940,
+        "y": 380
+      },
+      "opacity": 0.95,
+      "interval": {
+        "start": 0,
+        "end": 2.5
+      },
+      "endPolicy": "hide"
+    }
+  ],
+  "lines": [
+    {
+      "id": "line_follow",
+      "mode": "follow",
+      "layerId": "L_master",
+      "inSpace": "display",
+      "points": [
+        [
+          240,
+          60
+        ],
+        [
+          240,
+          660
+        ]
+      ],
+      "color": "#ffd400",
+      "thickness": 6
+    },
+    {
+      "id": "line_fixed",
+      "mode": "fixed",
+      "inSpace": "output",
+      "points": [
+        [
+          640,
+          0
+        ],
+        [
+          640,
+          720
+        ]
+      ],
+      "color": "#00e5ff",
+      "thickness": 4
+    }
+  ],
+  "ui": {
+    "previewZoom": 1
+  }
+}

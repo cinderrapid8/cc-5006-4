@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "name": "job_1794412800449_project",
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "bgColor": "#101418",
+    "duration": 2
+  },
+  "media": {
+    "m0": {
+      "file": "/workspace/dance-studio/data/media/1794412799832_grid_master.mp4",
+      "codec": "h264",
+      "width": 1280,
+      "height": 720,
+      "rotation": 0,
+      "sar": "1:1",
+      "parNum": 1,
+      "parDen": 1,
+      "displayWidth": 1280,
+      "displayHeight": 720,
+      "duration": 2,
+      "hasAlpha": false,
+      "fps": 30,
+      "isImage": false,
+      "pixFmt": "yuv420p",
+      "id": "1794412799832_grid_master.mp4"
+    },
+    "m1": {
+      "file": "/workspace/dance-studio/data/media/1794412800354_portrait_rot.mp4",
+      "codec": "h264",
+      "width": 1920,
+      "height": 1080,
+      "rotation": 90,
+      "sar": "1:1",
+      "parNum": 1,
+      "parDen": 1,
+      "displayWidth": 1080,
+      "displayHeight": 1920,
+      "duration": 1.5,
+      "hasAlpha": false,
+      "fps": 30,
+      "isImage": false,
+      "pixFmt": "yuv420p",
+      "id": "1794412800354_portrait_rot.mp4"
+    }
+  },
+  "layers": [
+    {
+      "id": "L0",
+      "name": "master",
+      "mediaId": "m0",
+      "steps": [
+        {
+          "id": "m",
+          "op": "mirror",
+          "inSpace": "display"
+        },
+        {
+          "id": "c",
+          "op": "crop",
+          "inSpace": "m",
+          "rect": {
+            "x": 400,
+            "y": 0,
+            "w": 600,
+            "h": 720
+          }
+        }
+      ],
+      "placement": {
+        "x": 0,
+        "y": 0
+      },
+      "opacity": 1,
+      "interval": {
+        "start": 0,
+        "end": 2
+      },
+      "endPolicy": "hide"
+    },
+    {
+      "id": "L1",
+      "name": "phone-pip",
+      "mediaId": "m1",
+      "steps": [],
+      "placement": {
+        "x": 900,
+        "y": 60
+      },
+      "opacity": 0.9,
+      "interval": {
+        "start": 0.3,
+        "end": 2
+      },
+      "endPolicy": "freeze"
+    }
+  ],
+  "lines": [
+    {
+      "id": "g1",
+      "mode": "follow",
+      "layerId": "L0",
+      "inSpace": "display",
+      "points": [
+        [
+          100,
+          80
+        ],
+        [
+          100,
+          640
+        ]
+      ],
+      "color": "#ffff00",
+      "thickness": 5
+    },
+    {
+      "id": "g2",
+      "mode": "fixed",
+      "inSpace": "output",
+      "points": [
+        [
+          640,
+          0
+        ],
+        [
+          640,
+          720
+        ]
+      ],
+      "color": "#00ffff",
+      "thickness": 4
+    }
+  ],
+  "ui": {
+    "previewZoom": 1
+  }
+}

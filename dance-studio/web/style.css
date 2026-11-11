@@ -1,0 +1,142 @@
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --border: #2a313c;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #2f81f7;
+  --accent2: #f7812f;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+.project-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+main {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  gap: 10px;
+  padding: 10px;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+.left, .center, .right { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.center { overflow: hidden; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.panel h2 { font-size: 13px; margin: 0 0 10px; color: var(--accent); }
+.muted { color: var(--muted); }
+.hint { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 8px 0 0; }
+code { background: #0d1117; padding: 1px 5px; border-radius: 4px; }
+
+label { display: inline-flex; align-items: center; gap: 6px; margin: 4px 6px 4px 0; }
+input[type="number"], input[type="text"], select {
+  width: 80px;
+  background: #0d1117;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 5px;
+  padding: 4px 6px;
+}
+input[type="text"] { width: 100%; }
+#projectName { width: 180px; }
+button {
+  background: #21262d;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+button.danger { color: #ff7b72; }
+.row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+ul { list-style: none; margin: 0; padding: 0; }
+.media-list li, .layer-list li, .line-list li {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.media-list li.selected, .layer-list li.selected, .line-list li.selected {
+  border-color: var(--accent);
+  background: #12233d;
+}
+.media-list .meta, .layer-list .meta { color: var(--muted); font-size: 11px; margin-top: 3px; }
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #21314a;
+  margin-left: 4px;
+}
+.badge.rot { background: #4a2131; }
+.badge.par { background: #3d4a21; }
+
+.canvas-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.canvas-toolbar { display: flex; gap: 16px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.canvas-wrap {
+  flex: 1;
+  overflow: auto;
+  background:
+    linear-gradient(45deg, #0a0d12 25%, transparent 25%, transparent 75%, #0a0d12 75%),
+    linear-gradient(45deg, #0a0d12 25%, transparent 25%, transparent 75%, #0a0d12 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  background-color: #05070a;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 12px;
+}
+#canvas { background: #000; display: block; }
+
+.timeline-panel { flex-shrink: 0; }
+#timeline { width: 100%; background: #0d1117; border-radius: 6px; }
+
+.steps-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px;
+}
+.space-tag {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--accent2);
+  background: #241a10;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.field-grid label { margin: 0; justify-content: space-between; }
+.field-grid input { width: 70px; }
+#jobStatus { color: var(--accent2); font-size: 12px; }
+.color-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align: middle; }

@@ -1,0 +1,15 @@
+{
+  "name": "dance-studio",
+  "version": "1.0.0",
+  "description": "Dance teaching video composer with explicit coordinate spaces, mirror/crop/zoom, alpha, reference lines and real ffmpeg export",
+  "main": "engine/server.js",
+  "scripts": {
+    "fixtures": "node tests/make_fixtures.js",
+    "test": "node tests/engine.test.js",
+    "test:e2e": "node tests/e2e.test.js",
+    "demo": "node tests/build_demo.js",
+    "start": "node engine/server.js"
+  },
+  "license": "MIT",
+  "private": true
+}

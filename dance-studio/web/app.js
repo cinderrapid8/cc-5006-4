@@ -22,7 +22,12 @@ const state = {
 };
 
 const $ = (id) => document.getElementById(id);
-const DanceSpace = window.DanceSpace;
+// All coordinate geometry goes through the composable transform kernel.
+//   lineage     : mirror/crop/zoom steps within project frames
+//   sourceframe : coded source pixels -> upright display frame
+//   viewport    : project output -> on-screen device window (preview zoom)
+//   overlay     : layer tip -> output canvas placement
+const T = window.DanceTransform;
 
 async function api(path, options) {
   const r = await fetch(path, options);
@@ -35,7 +40,7 @@ function selectedLayer() {
 }
 
 function tipSpace(layer) {
-  const lin = DanceSpace.computeLineage(state.project.media[layer.mediaId], layer.steps);
+  const lin = T.computeLineage(state.project.media[layer.mediaId], layer.steps);
   return { lin, tipRec: lin.spaces.get(lin.tip) };
 }
 
@@ -176,9 +181,8 @@ function renderInspector() {
   $('addMirror').onclick = () => addStep(layer, { id: `s${Date.now()}`, op: 'mirror', inSpace: lin.tip });
   $('addCrop').onclick = () => {
     const parent = lin.spaces.get(lin.tip);
-    const w = Math.round(parent.w / 2), h = Math.round(parent.h / 2);
-    addStep(layer, { id: `s${Date.now()}`, op: 'crop', inSpace: lin.tip,
-      rect: { x: 0, y: 0, w, h } });
+    const rect = defaultCropRect(parent.w, parent.h);
+    addStep(layer, { id: `s${Date.now()}`, op: 'crop', inSpace: lin.tip, rect });
   };
   $('addZoom').onclick = () => addStep(layer, { id: `s${Date.now()}`, op: 'zoom', inSpace: lin.tip, factor: 1.5 });
   host.querySelectorAll('[data-del-step]').forEach((b) => {
@@ -199,6 +203,11 @@ function addStep(layer, step) {
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
+// UI-only seed for a new crop: a quarter-area window at the tip origin.
+function defaultCropRect(w, h) {
+  return { x: 0, y: 0, w: Math.round(w / 2), h: Math.round(h / 2) };
+}
+
 // ------------------------------------------------------------- preview ----
 const canvas = $('canvas');
 const ctx = canvas.getContext('2d');
@@ -206,11 +215,14 @@ const ctx = canvas.getContext('2d');
 function draw() {
   const { width: W, height: H } = state.project.output;
   const zoom = state.project.ui.previewZoom;
-  canvas.width = Math.round(W * zoom);
-  canvas.height = Math.round(H * zoom);
+  // Project output frame -> device viewport: viewport module owns the scale.
+  const device = T.deviceCanvasSize(W, H, zoom);
+  canvas.width = device.width;
+  canvas.height = device.height;
   canvas.style.width = `${canvas.width}px`;
   canvas.style.height = `${canvas.height}px`;
-  ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+  const V = T.projectToDeviceMatrix(zoom);
+  ctx.setTransform(V[0], V[1], V[2], V[3], V[4], V[5]);
 
   ctx.fillStyle = state.project.output.bgColor;
   ctx.fillRect(0, 0, W, H);
@@ -225,7 +237,8 @@ function draw() {
     const { lin, tipRec } = tipSpace(layer);
     ctx.save();
     ctx.globalAlpha = layer.opacity;
-    ctx.translate(layer.placement.x, layer.placement.y);
+    const P = T.placementMatrix(layer.placement);
+    ctx.transform(P[0], P[1], P[2], P[3], P[4], P[5]);
     drawLayerContent(ctx, video, media, layer, lin, tipRec);
     ctx.restore();
     drawFollowLines(layer, lin);
@@ -238,9 +251,8 @@ function draw() {
 // Apply the same ordered space lineage the renderer compiles to ffmpeg.
 function drawLayerContent(c, video, media, layer, lin, tipRec) {
   const currentW = tipRec.w, currentH = tipRec.h;
-  // Start from the display-space upright, square-pixel frame.
-  c.save();
   // Clip to the tip bounds so transformed content never spills its window.
+  c.save();
   c.beginPath(); c.rect(0, 0, currentW, currentH); c.clip();
 
   // The composite transform maps display coords into tip coords.
@@ -251,26 +263,14 @@ function drawLayerContent(c, video, media, layer, lin, tipRec) {
 }
 
 function drawDisplayFrame(c, video, media) {
-  // coded -> upright (rotation metadata) -> square-pixel display
+  // coded source pixels -> upright, square-pixel display frame. The matrix is
+  // the same geometry the renderer's transpose/scale filters implement, so the
+  // preview cannot drift from the export (rotation metadata + PAR correction).
   c.save();
-  const swap = media.rotation === 90 || media.rotation === 270;
-  if (media.rotation === 90) {
-    c.translate(media.displayWidth, 0);
-    c.rotate(Math.PI / 2);
-    c.drawImage(video, 0, 0, media.height, media.width);
-  } else if (media.rotation === 270) {
-    c.translate(0, media.displayHeight);
-    c.rotate(-Math.PI / 2);
-    c.drawImage(video, 0, 0, media.height, media.width);
-  } else if (media.rotation === 180) {
-    c.translate(media.displayWidth, media.displayHeight);
-    c.rotate(Math.PI);
-    c.drawImage(video, 0, 0, media.width, media.height);
-  } else {
-    c.drawImage(video, 0, 0, media.displayWidth, media.displayHeight);
-  }
+  const M = T.codedToDisplayMatrix(media);
+  c.transform(M[0], M[1], M[2], M[3], M[4], M[5]);
+  c.drawImage(video, 0, 0, media.width, media.height);
   c.restore();
-  void swap;
 }
 
 function drawCanvasGrid(W, H) {
@@ -296,10 +296,9 @@ function strokePoints(points, color, thickness) {
 function drawFollowLines(layer, lin) {
   for (const line of state.project.lines) {
     if (line.mode !== 'follow' || line.layerId !== layer.id) continue;
-    // Map display-space points through the lineage into tip space, then add
-    // the layer's output placement — exactly what the renderer does.
-    const pts = DanceSpace.mapPolyline(lin, lin.tip, line.points)
-      .map(([x, y]) => [x + layer.placement.x, y + layer.placement.y]);
+    // display -> tip through the lineage, then tip -> output placement; the
+    // same overlay path the renderer uses for the follow-line PNG.
+    const pts = T.followLineToOutput(lin, layer.placement, line.points);
     strokePoints(pts, line.color, line.thickness);
   }
 }
@@ -324,9 +323,8 @@ function drawLineEditingPoints() {
 function mapFollowToOutput(line) {
   const layer = state.project.layers.find((l) => l.id === line.layerId);
   if (!layer) return [];
-  const lin = DanceSpace.computeLineage(state.project.media[layer.mediaId], layer.steps);
-  return DanceSpace.mapPolyline(lin, lin.tip, line.points)
-    .map(([x, y]) => [x + layer.placement.x, y + layer.placement.y]);
+  const lin = T.computeLineage(state.project.media[layer.mediaId], layer.steps);
+  return T.followLineToOutput(lin, layer.placement, line.points);
 }
 
 // ------------------------------------------------------- line placement ---
@@ -394,18 +392,19 @@ function renderLineList() {
 canvas.addEventListener('click', (e) => {
   const line = state.project.lines.find((l) => l.id === state.selectedLineId);
   if (!line) return;
-  const rect = canvas.getBoundingClientRect();
-  const outX = (e.clientX - rect.left) / state.project.ui.previewZoom;
-  const outY = (e.clientY - rect.top) / state.project.ui.previewZoom;
+  // device window -> project output frame (undo preview zoom)
+  const [outX, outY] = T.deviceToProject(
+    e.clientX, e.clientY, canvas.getBoundingClientRect(),
+    state.project.ui.previewZoom
+  );
   if (line.mode === 'fixed') {
     line.points.push([round(outX), round(outY)]);
   } else {
     const layer = state.project.layers.find((l) => l.id === line.layerId);
-    const lin = DanceSpace.computeLineage(state.project.media[layer.mediaId], layer.steps);
+    const lin = T.computeLineage(state.project.media[layer.mediaId], layer.steps);
     // output -> tip (undo placement) -> display (inverse lineage)
-    const tipX = outX - layer.placement.x;
-    const tipY = outY - layer.placement.y;
-    const [dx, dy] = DanceSpace.mapSpaceToDisplay(lin, lin.tip, tipX, tipY);
+    const [tipX, tipY] = T.outputToTip(layer.placement, outX, outY);
+    const [dx, dy] = T.mapSpaceToDisplay(lin, lin.tip, tipX, tipY);
     line.points.push([round(dx), round(dy)]);
   }
   draw(); renderLineList();

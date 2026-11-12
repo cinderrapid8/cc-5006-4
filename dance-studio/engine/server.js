@@ -189,9 +189,14 @@ function serveStatic(req, res, url) {
   if (url.pathname.startsWith('/media/')) {
     return serveFile(res, path.join(MEDIA_DIR, safeName(url.pathname.slice('/media/'.length))));
   }
-  // Browser build of the pure space-math module.
-  if (url.pathname === '/engine/space.js') {
-    return serveFile(res, path.join(ROOT, 'engine', 'space.js'));
+  // Browser builds of the pure coordinate-transform kernel and the
+  // legacy DanceSpace compatibility adapter.
+  if (url.pathname.startsWith('/engine/')) {
+    const engineFile = path.normalize(path.join(ROOT, url.pathname));
+    if (!engineFile.startsWith(ROOT)) {
+      res.writeHead(403); return res.end('forbidden');
+    }
+    return serveFile(res, engineFile);
   }
   serveFile(res, file);
 }

@@ -4,7 +4,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { computeLineage } = require('./space');
+const { computeLineage } = require('./transform');
 const { compileGraph, timelineDuration } = require('./filters');
 
 // Render a validated project to an actual composite video.

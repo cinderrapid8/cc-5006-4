@@ -1,0 +1,62 @@
+{
+  "capturedWith": "engine/space.js baseline (pre-transform-refactor)",
+  "sampleTimeSec": 0.5,
+  "project": "mirror then zoom 1.5x, follow+fixed lines, 1920x1080",
+  "direct": {
+    "file": "mirror_zoom.ppm",
+    "frame": {
+      "w": 1920,
+      "h": 1080,
+      "bytes": 6220800,
+      "sha256": "b14c254e602623b31bee7e19a1e854302cb362efb8fcaf2050cce7725e0a0966"
+    },
+    "marker": {
+      "x": 1349.5,
+      "y": 846.5,
+      "count": 11792
+    },
+    "anchorTopLeft": [
+      15.049382716049383,
+      20.098765432098766,
+      23.049382716049383,
+      255
+    ],
+    "anchorBottomLeft": [
+      253,
+      0,
+      252,
+      255
+    ]
+  },
+  "reopen": {
+    "file": "mirror_zoom_reopen.ppm",
+    "frame": {
+      "w": 1920,
+      "h": 1080,
+      "bytes": 6220800,
+      "sha256": "b14c254e602623b31bee7e19a1e854302cb362efb8fcaf2050cce7725e0a0966"
+    },
+    "marker": {
+      "x": 1349.5,
+      "y": 846.5,
+      "count": 11792
+    },
+    "anchorTopLeft": [
+      15.049382716049383,
+      20.098765432098766,
+      23.049382716049383,
+      255
+    ],
+    "anchorBottomLeft": [
+      253,
+      0,
+      252,
+      255
+    ]
+  },
+  "tolerance": {
+    "markerDeltaPx": 0.5,
+    "anchorChannelDelta": 1,
+    "differingPixelFraction": 0
+  }
+}

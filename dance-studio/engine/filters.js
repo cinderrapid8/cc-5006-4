@@ -2,21 +2,8 @@
 
 const path = require('path');
 const fs = require('fs');
-const space = require('./space');
+const transform = require('./transform');
 const png = require('./png');
-
-// ffprobe/ffmpeg rotation convention:
-//   rotation 90 means the stored frame must be turned 90 degrees clockwise to
-//   display upright. transpose=1 is clockwise 90, transpose=2 c-clockwise 90.
-function transposeFor(rotation) {
-  switch (rotation) {
-    case 0: case 360: return null;
-    case 90: return 'transpose=1';
-    case 180: return 'transpose=1,transpose=1';
-    case 270: return 'transpose=2';
-    default: throw new Error(`unsupported rotation ${rotation}`);
-  }
-}
 
 function esc(s) {
   return String(s).replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
@@ -66,16 +53,14 @@ function compileGraph(project, lineages, opts) {
 
     // 1) coded -> upright -> square-pixel display space.
     //    -noautorotate on the CLI keeps rotation OUR explicit responsibility.
+    //    Geometry (rotation transpose, PAR/scale) comes from the transform
+    //    kernel's source-frame descriptor, shared with the browser preview.
+    const src = transform.sourceFrame(media);
     chain.push('format=rgba');
-    const tr = transposeFor(media.rotation);
-    if (tr) chain.push(tr);
-    const needsParScale = media.parNum !== media.parDen;
-    const uprightW = media.rotation === 90 || media.rotation === 270
-      ? media.height : media.width;
-    const needsSizeScale = media.displayWidth !== uprightW;
-    if (needsParScale || needsSizeScale) {
+    if (src.transpose) chain.push(src.transpose);
+    if (src.needsScale) {
       chain.push(
-        `scale=${media.displayWidth}:${media.displayHeight}:flags=lanczos`,
+        `scale=${src.scale.w}:${src.scale.h}:flags=lanczos`,
         'setsar=1'
       );
     } else {
@@ -107,7 +92,7 @@ function compileGraph(project, lineages, opts) {
       const mapped = followLines.map((l) => ({
         id: l.id,
         thickness: l.thickness,
-        points: space.mapPolyline(lin, lin.tip, l.points),
+        points: transform.mapPolyline(lin, lin.tip, l.points),
       }));
       const pngFile = path.join(opts.tmpDir, `lines_follow_${layer.id}.png`);
       buildLinePng(pngFile, tipRec.w, tipRec.h, mapped, project.lines);
@@ -192,4 +177,4 @@ function timelineDuration(project) {
   return Math.max(d, 1);
 }
 
-module.exports = { compileGraph, timelineDuration, transposeFor };
+module.exports = { compileGraph, timelineDuration };

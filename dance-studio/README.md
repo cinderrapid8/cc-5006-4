@@ -15,10 +15,30 @@ node engine/server.js         # 启动 http://localhost:8080
 测试与演示：
 
 ```bash
-node tests/engine.test.js     # 17 项引擎/像素级测试
-node tests/e2e.test.js        # 上传→编辑→保存→后台渲染→下载 端到端
-node tests/build_demo.js      # 构建并渲染完整演示工程
+node tests/engine.test.js             # 17 项引擎/像素级测试
+node tests/transform_contract.test.js # 14 项坐标变换内核契约测试
+node tests/equivalence.test.js        # 镜像后缩放+重开，对冻结帧的前后差分
+node tests/e2e.test.js                # 上传→编辑→保存→后台渲染→下载 端到端
+node tests/build_demo.js              # 构建并渲染完整演示工程
 ```
+
+## 坐标变换内核（engine/transform）
+
+镜像、缩放、裁剪与叠加坐标统一在可组合内核里，显式区分三个帧：
+
+| 帧 | 含义 |
+|----|------|
+| `coded`（源像素） | 存储采样，可能带旋转元数据与非方像素 |
+| `display`/`output`（工程画幅） | 直立方像素 display、步骤 tip、最终 output |
+| `device`（显示窗口） | 预览画布像素，仅由 `ui.previewZoom` 决定 |
+
+- `matrix.js` 仿射原语 · `lineage.js` 步骤谱系 · `sourceframe.js` coded→display
+  （旋转+PAR，浏览器矩阵与 ffmpeg 滤镜同源）· `viewport.js` output→device ·
+  `overlay.js` tip→output 放置。契约见 `engine/transform/CONTRACT.md`。
+- 渲染（filters/render）、选区命中（web/app.js）、导出都只调用内核接口；
+  入参非法即抛错，不以默认值伪装成功。
+- `engine/space.js` 是保留给旧调用方的兼容适配层，`DanceSpace` 入口直接委托
+  内核，没有第二套实现。
 
 ## 坐标空间模型（核心约束）
 
@@ -35,7 +55,8 @@ node tests/build_demo.js      # 构建并渲染完整演示工程
 - 因此**先镜像后裁切**与**先裁切后镜像**是两条不同的步骤链：裁切矩形坐标处于不同空间，
   滤镜编译顺序也不同（`hflip,crop=...` vs `crop=...,hflip`）。见测试
   “mirror-then-crop and crop-then-mirror keep coordinates in their own spaces”。
-- `engine/space.js` 用仿射矩阵维护 display→任意末端空间的完整映射，参考线经同一矩阵精确变换。
+- `engine/transform/lineage.js` 用仿射矩阵维护 display→任意末端空间的完整映射，
+  参考线经同一矩阵精确变换；`engine/space.js` 仅作委托该内核的兼容适配层。
 
 ### 保留的素材信息（`engine/media.js`）
 
@@ -64,17 +85,20 @@ SAR/PAR 分数（如 `10:11`）、display 方像素尺寸、是否含 alpha、�
 
 ## 预览缩放只影响展示
 
-`ui.previewZoom` 仅用于前端画布 `setTransform`，渲染器从不读取它；
-测试以相同工程不同 zoom 导出，逐字节比对像素完全一致。
+`ui.previewZoom` 仅经 `engine/transform/viewport.js` 进入预览画布的 device
+变换，渲染器从不读取它；测试以相同工程不同 zoom 导出，逐字节比对像素完全一致。
 
 ## 目录
 
 ```
-engine/  space.js 空间谱系 · media.js 探测 · project.js 工程模型/校验
+engine/  transform/ 坐标变换内核（matrix·lineage·sourceframe·viewport·overlay，
+                      契约见 CONTRACT.md）· space.js 旧入口兼容适配层
+         media.js 探测 · project.js 工程模型/校验
          filters.js ffmpeg 滤镜图编译 · render.js 渲染执行 · png.js RGBA PNG
          mp4rotate.js 注入真实旋转元数据 · bitmap.js 测试位图/字体 · server.js HTTP API
-web/     index.html style.css app.js（画布编辑器）
-tests/   make_fixtures.js 合成素材 · engine.test.js · e2e.test.js · build_demo.js
+web/     index.html style.css app.js（画布编辑器，只经 transform 内核取几何）
+tests/   make_fixtures.js 合成素材 · engine.test.js · transform_contract.test.js
+         equivalence.test.js（含 baseline/ 冻结帧）· e2e.test.js · build_demo.js
 ```
 
 ## 测试素材如何保证可验证

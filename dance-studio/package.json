@@ -6,7 +6,10 @@
   "scripts": {
     "fixtures": "node tests/make_fixtures.js",
     "test": "node tests/engine.test.js",
+    "test:contract": "node tests/transform_contract.test.js",
+    "test:equivalence": "node tests/equivalence.test.js",
     "test:e2e": "node tests/e2e.test.js",
+    "baseline": "node tests/capture_baseline.js",
     "demo": "node tests/build_demo.js",
     "start": "node engine/server.js"
   },
